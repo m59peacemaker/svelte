@@ -16089,14 +16089,14 @@ function dom(parsed, source, stylesheet, options) {
             .map(function (n) { return n + ": @" + (n === 'teardown' ? 'destroy' : n); })
             .join(',\n')));
     // TODO deprecate component.teardown()
-    builder.addBlock((_f = ["\n\t\tfunction ", " ( options ) {\n\t\t\toptions = options || {};\n\t\t\t", "\n\t\t\t", "\n\t\t\tthis._state = ", ";\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\n\t\t\tthis._observers = {\n\t\t\t\tpre: Object.create( null ),\n\t\t\t\tpost: Object.create( null )\n\t\t\t};\n\n\t\t\tthis._handlers = Object.create( null );\n\t\t\t", "\n\n\t\t\tthis._root = options._root || this;\n\t\t\tthis._yield = options._yield;\n\t\t\tthis._bind = options._bind;\n\t\t\tthis._slotted = options.slots || {};\n\n\t\t\t", "\n\n\t\t\t", "\n\n\t\t\t", "\n\n\t\t\t", "\n\n\t\t\tthis._fragment = @create_main_fragment( this._state, this );\n\n\t\t\tif ( options.target ) {\n\t\t\t\t", "\n\t\t\t\tthis._fragment.", "( options.target, null );\n\t\t\t}\n\n\t\t\t", "\n\t\t}\n\n\t\t@assign( ", ", ", ");\n\n\t\t", "\n\n\t\t", "\n\n\t\t", "\n\t"], _f.raw = ["\n\t\tfunction ", " ( options ) {\n\t\t\toptions = options || {};\n\t\t\t",
+    builder.addBlock((_f = ["\n\t\tfunction ", " ( options ) {\n\t\t\toptions = options || {};\n\t\t\t", "\n\t\t\t", "\n\t\t\tthis._state = ", ";\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\n\t\t\tthis._observers = {\n\t\t\t\tpre: Object.create( null ),\n\t\t\t\tpost: Object.create( null )\n\t\t\t};\n\n\t\t\tthis._handlers = Object.create( null );\n\t\t\t", "\n\n\t\t\tthis._root = options._root || this;\n\t\t\tthis._yield = options._yield;\n\t\t\tthis._bind = options._bind;\n\t\t\tthis._slotted = options.slots || {};\n\n\t\t\t", "\n\n\t\t\t", "\n\n\t\t\t", "\n\n\t\t\t", "\n\n\t\t\tthis._fragment = @create_main_fragment( this._state, this );\n\n\t\t\tif ( options.target ) {\n\t\t\t\t", "\n\t\t\t\tthis._fragment.", "( options.target, options.anchor || null );\n\t\t\t}\n\n\t\t\t", "\n\t\t}\n\n\t\t@assign( ", ", ", ");\n\n\t\t", "\n\n\t\t", "\n\n\t\t", "\n\t"], _f.raw = ["\n\t\tfunction ", " ( options ) {\n\t\t\toptions = options || {};\n\t\t\t",
         "\n\t\t\t", "\n\t\t\tthis._state = ",
         ";\n\t\t\t", "\n\t\t\t", "\n\t\t\t",
         "\n\t\t\t",
         "\n\n\t\t\tthis._observers = {\n\t\t\t\tpre: Object.create( null ),\n\t\t\t\tpost: Object.create( null )\n\t\t\t};\n\n\t\t\tthis._handlers = Object.create( null );\n\t\t\t", "\n\n\t\t\tthis._root = options._root || this;\n\t\t\tthis._yield = options._yield;\n\t\t\tthis._bind = options._bind;\n\t\t\tthis._slotted = options.slots || {};\n\n\t\t\t",
         "\n\n\t\t\t", "\n\n\t\t\t",
         "\n\n\t\t\t", "\n\n\t\t\tthis._fragment = @create_main_fragment( this._state, this );\n\n\t\t\tif ( options.target ) {\n\t\t\t\t",
-        "\n\t\t\t\tthis._fragment.", "( options.target, null );\n\t\t\t}\n\n\t\t\t",
+        "\n\t\t\t\tthis._fragment.", "( options.target, options.anchor || null );\n\t\t\t}\n\n\t\t\t",
         "\n\t\t}\n\n\t\t@assign( ", ", ", ");\n\n\t\t",
         "\n\n\t\t",
         "\n\n\t\t", "\n\t"], deindent(_f, name, options.dev &&
@@ -16610,7 +16610,7 @@ function ssr(parsed, source, stylesheet, options) {
     var _b, _c, _d, _e;
 }
 
-var version$1 = "1.31.0";
+var version$1 = "1.32.0";
 
 var UNKNOWN = {};
 function gatherPossibleValues(node, set) {
@@ -16891,15 +16891,17 @@ var Rule$2 = (function () {
     };
     Rule.prototype.minify = function (code, cascade) {
         var c = this.node.start;
+        var started = false;
         this.selectors.forEach(function (selector, i) {
             if (cascade || selector.used) {
-                var separator = i > 0 ? ',' : '';
+                var separator = started ? ',' : '';
                 if ((selector.node.start - c) > separator.length) {
                     code.overwrite(c, selector.node.start, separator);
                 }
                 if (!cascade)
                     selector.minify(code);
                 c = selector.node.end;
+                started = true;
             }
         });
         code.remove(c, this.node.block.start);
