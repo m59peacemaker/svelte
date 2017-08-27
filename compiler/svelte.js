@@ -9837,6 +9837,18 @@ function tag(parser) {
             parser.stack.pop();
         }
     }
+    if (name === 'slot') {
+        var i = parser.stack.length;
+        while (i--) {
+            var item = parser.stack[i];
+            if (item.type === 'EachBlock') {
+                parser.error("<slot> cannot be a child of an each-block", start);
+            }
+            if (item.type === 'Element' && item.name === 'slot') {
+                parser.error("<slot> elements cannot be nested", start);
+            }
+        }
+    }
     var attributes = [];
     var uniqueNames = new Set();
     var attribute;
@@ -11132,6 +11144,30 @@ function validateElement(validator, node, refs, refCallees) {
         // TODO upgrade to validator.error in v2
         validator.warn(node.name + " component is not defined", node.start);
     }
+    if (node.name === 'slot') {
+        var nameAttribute = node.attributes.find(function (attribute) { return attribute.name === 'name'; });
+        if (nameAttribute) {
+            if (nameAttribute.value.length !== 1 || nameAttribute.value[0].type !== 'Text') {
+                validator.error("<slot> name cannot be dynamic", nameAttribute.start);
+            }
+            var slotName = nameAttribute.value[0].data;
+            if (slotName === 'default') {
+                validator.error("default is a reserved word \u2014 it cannot be used as a slot name", nameAttribute.start);
+            }
+            // TODO should duplicate slots be disallowed? Feels like it's more likely to be a
+            // bug than anything. Perhaps it should be a warning
+            // if (validator.slots.has(slotName)) {
+            // 	validator.error(`duplicate '${slotName}' <slot> element`, nameAttribute.start);
+            // }
+            // validator.slots.add(slotName);
+        }
+        else {
+            // if (validator.slots.has('default')) {
+            // 	validator.error(`duplicate default <slot> element`, node.start);
+            // }
+            // validator.slots.add('default');
+        }
+    }
     var hasIntro;
     var hasOutro;
     var hasTransition;
@@ -11214,6 +11250,9 @@ function validateElement(validator, node, refs, refCallees) {
                     validator.error("A <textarea> can have either a value attribute or (equivalently) child content, but not both", attribute.start);
                 }
             }
+            if (attribute.name === 'slot' && !isComponent && isDynamic(attribute)) {
+                validator.error("slot attribute cannot have a dynamic value", attribute.start);
+            }
         }
     });
 }
@@ -11224,10 +11263,13 @@ function checkTypeAttribute(validator, node) {
     if (attribute.value === true) {
         validator.error("'type' attribute must be specified", attribute.start);
     }
-    if (attribute.value.length > 1 || attribute.value[0].type !== 'Text') {
+    if (isDynamic(attribute)) {
         validator.error("'type' attribute cannot be dynamic if input uses two-way binding", attribute.start);
     }
     return attribute.value[0].data;
+}
+function isDynamic(attribute) {
+    return attribute.value.length > 1 || attribute.value[0].type !== 'Text';
 }
 
 var validBindings = [
@@ -11345,6 +11387,7 @@ var Validator = (function () {
         this.methods = new Map();
         this.helpers = new Map();
         this.transitions = new Map();
+        this.slots = new Set();
     }
     Validator.prototype.error = function (message, pos) {
         throw new ValidationError(message, this.source, pos, this.filename);
