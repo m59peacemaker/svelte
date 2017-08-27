@@ -1,7 +1,5 @@
 .DS_Store
 node_modules
-ssr
-shared.js
 scratch
 !test/compiler
 !test/ssr
